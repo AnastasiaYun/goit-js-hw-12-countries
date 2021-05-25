@@ -11,11 +11,10 @@
       crossorigin="anonymous"
     />
   </head>
-  <body>
-    <!-- Так добавляются фрагменты в главные HTML-файлы страниц. -->
-    <include src="./partials/example.html"></include>
+  <body class="">
+    <input class="input" type="text" placeholder="Search country" />
 
-    <!-- Скрипт идёт последним в разметке. В нём уже подключен главный SASS-файл. -->
+    <ul class="countries-list"></ul>
     <script src="./index.js"></script>
   </body>
 </html>
