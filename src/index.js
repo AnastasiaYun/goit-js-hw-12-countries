@@ -1,55 +1,97 @@
-import './sass/main.scss';
-import inputTemplate from "./template.hbs";
-import countriesList from "./countries.hbs";
-import { debounce } from "lodash";
-import ApiServise from "./api-service.js";
-import { error } from "@pnotify/core";
-import { notice } from "@pnotify/core";
-import "@pnotify/core/dist/PNotify.css";
-import "@pnotify/core/dist/BrightTheme.css";
+import debounce from 'lodash.debounce';
+// var debounce = require('lodash.debounce');
+
+
+
+import { alert, notice, info, success, error } from '@pnotify/core';
+import '@pnotify/core/dist/BrightTheme.css';
+import '@pnotify/core/dist/PNotify.css';
+import { defaults } from '@pnotify/core';
+defaults.width = '400px';
+defaults.minHeight = '20px'
+defaults.delay = '2000';
+
+
+import countriesCardTpl from './templates/country-card.hbs';
+import countriessListTpl from './templates/country-list.hbs';
+import bodyFlag from './templates/body_flag.hbs';
+
+
+import API from './countries.js';
+
 
 const refs = {
-  input: document.querySelector("input"),
-  countriesList: document.querySelector(".countries-list"),
+    inputSearch: document.querySelector('.input-search'),
+    cardContainer: document.querySelector('.js-card-container'),
+    // clearBtn:document.querySelectorAll('.button'),
 };
+// refs.inputSearch.addEventListener('input', onSearch)
+refs.inputSearch.addEventListener('input', debounce(onSearch, 500))
 
-const apiServise = new ApiServise();
 
-refs.input.addEventListener("input", debounce(onSearch, 500));
 
 function onSearch(e) {
-  clearCardList();
+    
+    // e.preventDefault();
+    const inputValue = refs.inputSearch.value;
 
-  apiServise.query = e.target.value;
+    if (inputValue.trim() === '') {
+        return;
+    }
 
-  apiServise
-    .fetchCountries()
-    .then((data) => {
-      if (data.length > 10) {
-        error({
-          text: "Too many matches found. Please enter a more spesific query!",
-        });
-      } else if (data.length > 1) {
-        countriesMarkup(data);
-      } else {
-        countryMarkup(data);
-      }
-    })
-    .catch((error) =>
-      notice({
-        text: "Tape the name of the country",
-      })
-    );
+    API.fetchCountries(inputValue).then(checkNumLetters).catch(onFetchError);
 }
 
-function countriesMarkup(items) {
-  refs.countriesList.insertAdjacentHTML("beforeend", countriesList(items));
+// then(response => {
+//       if (response.status === 404) {
+//           clearMarkup();
+//       }
+//     })
+
+function checkNumLetters(countries) {
+    if (countries.length > 10) {
+            clearMarkup()
+        error('Слишком много совпадений, введите более точный запрос');
+    };
+    if (countries.length >= 2 && countries.length <= 10) {
+            console.log(countries.length)
+        rendercountriessListTpl(countries);
+    };
+    if (countries.length === 1) {
+        rendercountriesCard(countries)
+    }  
+    
 }
 
-function countryMarkup(items) {
-  refs.countriesList.insertAdjacentHTML("beforeend", inputTemplate(items));
+function rendercountriesCard(countries) {
+    //console.log(countries[0]) //как сделать чтоб 0 само подставляло? 
+    const markup = countriesCardTpl(countries[0]);
+    // console.log(bodyFlag(countries))
+            clearMarkup()
+        
+    // refs.cardContainer.innerHTML = markup;
+    refs.cardContainer.insertAdjacentHTML('beforeend', markup);
+    // document.body.style.backgroundImage = "url(`${srcFlag}`)";
+// const srcFlag = document.querySelectorAll('img').getAttribute('alt');
+    
 }
 
-function clearCardList() {
-  refs.countriesList.innerHTML = "";
+function rendercountriessListTpl(countries) {
+    const markup = countriessListTpl(countries);
+    console.log(markup)
+clearMarkup()
+    refs.cardContainer.insertAdjacentHTML('beforeend', markup);
+    
+}
+
+function onFetchError(error) {
+    clearMarkup();
+
+    console.log(error);
+    
+}
+
+
+function clearMarkup() {
+  refs.cardContainer.innerHTML = '';
 }
